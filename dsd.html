@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Music Covers — Traveler</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --text: #f0ead8;
+      --text-dim: rgba(240,234,216,.5);
+      --bg: #08090f;
+      --ac: #c890f0;
+      --border: rgba(255,255,255,.07);
+      --surface: rgba(255,255,255,.04);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Crimson Pro', serif;
+      min-height: 100vh; overflow-x: hidden;
+    }
+    #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.2rem;
+      background: rgba(8,9,15,.97);
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: .4rem;
+      font-family: 'Rajdhani', sans-serif; font-size: .72rem;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--text-dim); text-decoration: none;
+      border: 1px solid var(--border); padding: .4rem .9rem;
+      border-radius: 2px; transition: color .3s, border-color .3s;
+    }
+    .back-btn:hover { color: var(--ac); border-color: rgba(200,144,240,.4); }
+    .topbar-title {
+      font-family: 'Cinzel', serif; font-size: 1rem;
+      letter-spacing: .08em; color: var(--text);
+      flex: 1; text-align: center; padding: 0 .8rem;
+    }
+    .topbar-count {
+      font-family: 'Rajdhani', sans-serif; font-size: .68rem;
+      letter-spacing: .15em; color: var(--text-dim); white-space: nowrap;
+    }
+
+    /* ── LAYOUT ── */
+    .layout { position: relative; z-index: 1; display: flex; flex-direction: column; }
+
+    /* ── PLAYER ── */
+    .player-col {
+      width: 100%; background: #000;
+      position: sticky;
+      top: 57px;
+      z-index: 90;
+    }
+    .player-wrap { position: relative; }
+    /* YouTube true 16:9 */
+    .video-ratio {
+      position: relative; width: 100%; padding-top: 56.25%; background: #000;
+    }
+    .video-ratio iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+    }
+    .video-placeholder {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: .8rem;
+      background: linear-gradient(135deg, rgba(25,8,45,.95), rgba(8,5,18,.98));
+    }
+    .ph-icon { font-size: 3rem; opacity: .2; }
+    .ph-text {
+      font-family: 'Rajdhani', sans-serif; font-size: .72rem;
+      letter-spacing: .28em; text-transform: uppercase; color: var(--text-dim);
+    }
+    .player-wrap::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; z-index: 2;
+      background: linear-gradient(to right, transparent, var(--ac), transparent);
+    }
+
+    /* Now playing bar */
+    .np-bar {
+      display: flex; align-items: center; gap: .7rem;
+      padding: .7rem 1.2rem;
+      background: rgba(14,6,26,.98);
+      border-bottom: 1px solid rgba(200,144,240,.12);
+      min-height: 46px;
+    }
+    .np-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ac); flex-shrink: 0; opacity: 0;
+      transition: opacity .3s;
+      animation: dot-pulse 2s ease-in-out infinite;
+    }
+    .np-dot.on { opacity: 1; }
+    @keyframes dot-pulse {
+      0%,100%{box-shadow:0 0 5px var(--ac);}
+      50%{box-shadow:0 0 14px var(--ac),0 0 26px rgba(200,144,240,.3);}
+    }
+    .np-label {
+      font-family: 'Rajdhani', sans-serif; font-size: .58rem;
+      letter-spacing: .3em; text-transform: uppercase;
+      color: var(--text-dim); flex-shrink: 0;
+    }
+    .np-info { flex: 1; overflow: hidden; }
+    .np-title {
+      font-family: 'Rajdhani', sans-serif; font-weight: 600;
+      font-size: .88rem; letter-spacing: .04em; color: var(--ac);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .np-artist {
+      font-size: .75rem; color: var(--text-dim);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .np-empty { font-style: italic; font-size: .85rem; color: var(--text-dim); }
+
+    /* ── SEARCH ── */
+    .search-bar {
+      padding: .75rem 1.2rem;
+      background: rgba(8,9,15,.95);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .search-inner { position: relative; flex: 1; }
+    .search-icon {
+      position: absolute; left: .8rem; top: 50%;
+      transform: translateY(-50%); font-size: .8rem;
+      pointer-events: none; color: var(--ac);
+    }
+    .search-input {
+      width: 100%; padding: .6rem .8rem .6rem 2.4rem;
+      background: rgba(200,144,240,.06);
+      border: 1px solid rgba(200,144,240,.18);
+      border-radius: 2px; color: var(--text);
+      font-family: 'Rajdhani', sans-serif; font-size: .88rem;
+      letter-spacing: .04em; outline: none; transition: border-color .3s;
+    }
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-input:focus { border-color: rgba(200,144,240,.5); }
+    .search-count {
+      font-family: 'Rajdhani', sans-serif; font-size: .65rem;
+      letter-spacing: .15em; color: var(--text-dim); white-space: nowrap;
+    }
+
+    /* ── SONG LIST ── */
+    .list-col { display: flex; flex-direction: column; }
+    .song-list {
+      position: relative; z-index: 1;
+      padding: .9rem 1rem 5rem;
+      display: flex; flex-direction: column; gap: .6rem;
+    }
+    .song-row {
+      display: flex; align-items: center; gap: .85rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px; padding: .8rem .95rem;
+      cursor: pointer;
+      transition: transform .22s, border-color .22s, background .22s, box-shadow .22s;
+      position: relative; overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .song-row::before {
+      content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 2px;
+      background: var(--rc); opacity: 0; transition: opacity .3s;
+    }
+    .song-row:hover { transform: translateX(3px); border-color: var(--rb); }
+    .song-row.active {
+      border-color: var(--rc); background: var(--rbg);
+      box-shadow: 0 0 16px var(--rg);
+    }
+    .song-row.active::before { opacity: 1; }
+    .song-row.hidden { display: none; }
+
+    .row-num {
+      font-family: 'Cinzel', serif; font-size: .62rem;
+      color: var(--rc); opacity: .45; min-width: 20px;
+      text-align: right; flex-shrink: 0;
+    }
+    .row-emoji {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: var(--rbg); border: 1px solid var(--rb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; transition: transform .2s;
+    }
+    .song-row:hover .row-emoji,
+    .song-row.active .row-emoji { transform: scale(1.12); }
+    .row-info { flex: 1; overflow: hidden; }
+    .row-title {
+      font-family: 'Rajdhani', sans-serif; font-weight: 600;
+      font-size: .9rem; letter-spacing: .03em; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .12rem;
+    }
+    .row-artist {
+      font-size: .78rem; color: var(--rc); opacity: .65;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .row-btn {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      border: 1.5px solid var(--rb); background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--rc); font-size: .8rem;
+      transition: background .22s, border-color .22s, transform .2s;
+    }
+    .song-row:hover .row-btn { background: var(--rbg); border-color: var(--rc); }
+    .song-row.active .row-btn {
+      background: var(--rc); color: var(--bg);
+      border-color: var(--rc); transform: scale(1.05);
+    }
+    .no-results {
+      display: none; text-align: center;
+      padding: 3rem 1rem; font-style: italic; color: var(--text-dim);
+    }
+    .no-results.show { display: block; }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 860px) {
+      .topbar { padding: 1rem 2.5rem; }
+      .layout {
+        flex-direction: row;
+        height: calc(100vh - 61px);
+        overflow: hidden;
+      }
+      .list-col {
+        flex: 1; overflow: hidden;
+        border-right: 1px solid var(--border);
+      }
+      .search-bar { padding: .9rem 1.5rem; }
+      .song-list {
+        flex: 1; overflow-y: auto; padding: 1rem 1.5rem 2rem;
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: .7rem; align-content: start;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(200,144,240,.2) transparent;
+      }
+      .song-list::-webkit-scrollbar { width: 4px; }
+      .song-list::-webkit-scrollbar-thumb { background: rgba(200,144,240,.2); border-radius: 2px; }
+      .no-results { grid-column: 1/-1; }
+      .player-col {
+        width: 420px; flex-shrink: 0;
+        display: flex; flex-direction: column;
+        position: static; /* override mobile sticky */
+      }
+      /* YouTube stays true 16:9 on desktop too */
+      .video-ratio { padding-top: 56.25%; }
+      .np-bar { padding: .9rem 1.5rem; }
+    }
+
+    @media (min-width: 1100px) {
+      .player-col { width: 500px; }
+    }
+
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-family: 'Rajdhani', sans-serif; font-size: .65rem;
+      letter-spacing: .15em; color: rgba(240,234,216,.15);
+    }
+  </style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<div class="topbar">
+  <a href="index.html" class="back-btn">← Kembali</a>
+  <div class="topbar-title">Music Covers</div>
+  <div class="topbar-count">28 covers</div>
+</div>
+
+<div class="layout">
+
+  <!-- RIGHT: player (top on mobile) -->
+  <div class="player-col">
+    <div class="player-wrap">
+      <div class="video-ratio" id="videoRatio">
+        <div class="video-placeholder">
+          <div class="ph-icon">⚡</div>
+          <p class="ph-text">Pilih lagu untuk diputar</p>
+        </div>
+      </div>
+    </div>
+    <div class="np-bar">
+      <div class="np-dot" id="npDot"></div>
+      <span class="np-label">Now Playing</span>
+      <div class="np-info" id="npInfo">
+        <div class="np-empty">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEFT: list -->
+  <div class="list-col">
+    <div class="search-bar">
+      <div class="search-inner">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="Cari judul atau artis..." autocomplete="off"/>
+      </div>
+      <span class="search-count" id="searchCount">28 lagu</span>
+    </div>
+    <div class="song-list" id="songList"></div>
+    <div class="no-results" id="noResults">⚡ Lagu tidak ditemukan.</div>
+  </div>
+
+</div>
+
+<footer>© 2026 Traveler · Between Worlds</footer>
+
+<script>
+/* STARS */
+const sc=document.getElementById('stars'),sx=sc.getContext('2d');
+function rsz(){sc.width=innerWidth;sc.height=innerHeight;}
+rsz();addEventListener('resize',rsz);
+let ST=[];
+for(let i=0;i<140;i++)ST.push({x:Math.random(),y:Math.random(),r:Math.random()*.9+.2,o:Math.random()*.4+.1,s:Math.random()*.4+.15,t:Math.random()*Math.PI*2});
+(function tick(){sx.clearRect(0,0,sc.width,sc.height);const n=Date.now()/1000;ST.forEach(s=>{const p=Math.sin(n*s.s+s.t)*.3+.7;sx.beginPath();sx.arc(s.x*sc.width,s.y*sc.height,s.r,0,Math.PI*2);sx.fillStyle=`rgba(200,144,240,${s.o*p})`;sx.fill();});requestAnimationFrame(tick);})();
+
+const songs=[
+  {title:'La Vaguelette',artist:'Furina Theme (Genshin Impact)',yt:'8KzYUkZP-nQ'},
+  {title:"Sinner's Finale",artist:'Focalors Sacrifice Dance (Genshin Impact)',yt:'I6BaK5QzZ8o'},
+  {title:'Indonesia Pusaka',artist:'Genshin Lyre Cover',yt:'ERk78GubtzU'},
+  {title:'Photograph',artist:'Ed Sheeran',yt:'1C4ftcNSqKA'},
+  {title:'Something Just Like This',artist:'The Chainsmokers & Coldplay',yt:'gj8FeuB4Ipg'},
+  {title:"Nothing's Gonna Change My Love",artist:'George Benson',yt:'ZZpqyNtCnWA'},
+  {title:'Love Yourself',artist:'Justin Bieber',yt:'o4jGLCizMl4'},
+  {title:'The Nights',artist:'Avicii',yt:'tHREINi86BA'},
+  {title:'Demons',artist:'Imagine Dragons',yt:'FezCG2tSy9M'},
+  {title:'Perfect',artist:'Ed Sheeran',yt:'g2rchwZaoJg'},
+  {title:'Until I Found You',artist:'Stephen Sanchez',yt:'94duTsvtS-0'},
+  {title:'Beautiful In White',artist:'Shane Filan',yt:'kziioDyWbp0'},
+  {title:'Shirushi',artist:'LiSA',yt:'24PDah97kNA'},
+  {title:'See You Again',artist:'Wiz Khalifa ft. Charlie Puth',yt:'Ph7JFSWIFdE'},
+  {title:'My Heart Will Go On',artist:'Celine Dion (Titanic)',yt:'m48iNMXeQ-g'},
+  {title:'Akuma no Ko',artist:'Ai Higuchi (Attack on Titan)',yt:'vkVE8Kr230Q'},
+  {title:'Slipping Through My Fingers',artist:'ABBA',yt:'lPVrxz8Tk3M'},
+  {title:'Someone You Loved',artist:'Lewis Capaldi',yt:'MujW1vWuKnQ'},
+  {title:'I See the Light',artist:'Mandy Moore & Zachary Levi',yt:'Yjhjzt7rcbw'},
+  {title:'Wake Me Up When September Ends',artist:'Green Day',yt:'XU0-aWaIK08'},
+  {title:'Elli Theme',artist:'Harvest Moon: Back to Nature',yt:'W19JPGpQBxM'},
+  {title:'Right Here Waiting',artist:'Richard Marx',yt:'ucwbW1z2HSE'},
+  {title:'On My Way',artist:'Alan Walker, Sabrina Carpenter & Farruko',yt:'SOAVnbWx4YU'},
+  {title:'Ibu Kita Kartini',artist:'W.R. Supratman',yt:'D-oFclOqfSg'},
+  {title:'Love Story',artist:'Taylor Swift',yt:'bshp68pC2Jc'},
+  {title:'Locked Away',artist:'R. City ft. Adam Levine',yt:'39JqhfTt4vg'},
+  {title:'Let Her Go',artist:'Passenger',yt:'8rK6y7vyQlQ'},
+  {title:'Cupid',artist:'FIFTY FIFTY',yt:'D-HwtZtc-aY'},
+];
+
+const palettes=[
+  {rbg:'rgba(200,144,240,.1)',rb:'rgba(200,144,240,.28)',rc:'#c890f0',rg:'rgba(200,144,240,.08)'},
+  {rbg:'rgba(100,180,240,.1)',rb:'rgba(100,180,240,.28)',rc:'#70b8f0',rg:'rgba(100,180,240,.08)'},
+  {rbg:'rgba(240,160,80,.1)', rb:'rgba(240,160,80,.28)', rc:'#f0a050',rg:'rgba(240,160,80,.08)'},
+  {rbg:'rgba(80,210,140,.1)', rb:'rgba(80,210,140,.28)', rc:'#50d28c',rg:'rgba(80,210,140,.08)'},
+  {rbg:'rgba(240,100,100,.1)',rb:'rgba(240,100,100,.28)',rc:'#f06464',rg:'rgba(240,100,100,.08)'},
+  {rbg:'rgba(240,220,80,.1)', rb:'rgba(240,220,80,.28)', rc:'#f0dc50',rg:'rgba(240,220,80,.08)'},
+  {rbg:'rgba(160,100,240,.1)',rb:'rgba(160,100,240,.28)',rc:'#a064f0',rg:'rgba(160,100,240,.08)'},
+];
+const emojis=['🎵','🎶','🎼','🎹','🎸','🎺','🎻','🥁','🪗','🎤'];
+
+const list=document.getElementById('songList');
+let activeRow=null;
+
+songs.forEach((s,i)=>{
+  const p=palettes[i%palettes.length];
+  const row=document.createElement('div');
+  row.className='song-row';
+  row.dataset.search=(s.title+' '+s.artist).toLowerCase();
+  row.style.cssText=`--rbg:${p.rbg};--rb:${p.rb};--rc:${p.rc};--rg:${p.rg}`;
+  row.innerHTML=`
+    <span class="row-num">${String(i+1).padStart(2,'0')}</span>
+    <div class="row-emoji">${emojis[i%emojis.length]}</div>
+    <div class="row-info">
+      <div class="row-title">${s.title}</div>
+      <div class="row-artist">${s.artist}</div>
+    </div>
+    <div class="row-btn">▶</div>
+  `;
+  row.addEventListener('click',()=>play(i,row,s));
+  list.appendChild(row);
+});
+
+function play(i,row,s){
+  if(activeRow){
+    activeRow.classList.remove('active');
+    activeRow.querySelector('.row-btn').textContent='▶';
+  }
+  row.classList.add('active');
+  row.querySelector('.row-btn').textContent='■';
+  activeRow=row;
+
+  document.getElementById('npDot').classList.add('on');
+  document.getElementById('npInfo').innerHTML=`
+    <div class="np-title">${s.title}</div>
+    <div class="np-artist">${s.artist}</div>
+  `;
+
+  // YouTube embed — true 16:9, no cropping
+  document.getElementById('videoRatio').innerHTML=`<iframe
+    src="https://www.youtube.com/embed/${s.yt}?autoplay=1&rel=0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>`;
+
+  // Mobile: scroll to player
+  if(window.innerWidth<860){
+    document.querySelector('.player-col').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+/* SEARCH */
+const inp=document.getElementById('searchInput');
+const cnt=document.getElementById('searchCount');
+const nr=document.getElementById('noResults');
+inp.addEventListener('input',()=>{
+  const q=inp.value.toLowerCase().trim();
+  let v=0;
+  list.querySelectorAll('.song-row').forEach(r=>{
+    const m=!q||r.dataset.search.includes(q);
+    r.classList.toggle('hidden',!m);
+    if(m)v++;
+  });
+  cnt.textContent=q?`${v} ditemukan`:`${songs.length} lagu`;
+  nr.classList.toggle('show',v===0);
+  nr.style.display=v===0?'block':'none';
+});
+</script>
+</body>
+</html>
