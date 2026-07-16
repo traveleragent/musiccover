@@ -322,6 +322,7 @@ for(let i=0;i<140;i++)ST.push({x:Math.random(),y:Math.random(),r:Math.random()*.
 (function tick(){sx.clearRect(0,0,sc.width,sc.height);const n=Date.now()/1000;ST.forEach(s=>{const p=Math.sin(n*s.s+s.t)*.3+.7;sx.beginPath();sx.arc(s.x*sc.width,s.y*sc.height,s.r,0,Math.PI*2);sx.fillStyle=`rgba(200,144,240,${s.o*p})`;sx.fill();});requestAnimationFrame(tick);})();
 
 const songs=[
+  {title:'Happy Birthday',artist:'Cover',yt:'tUbDAjuD0v0'},
   {title:'La Vaguelette',artist:'Furina Theme (Genshin Impact)',yt:'8KzYUkZP-nQ'},
   {title:"Sinner's Finale",artist:'Focalors Sacrifice Dance (Genshin Impact)',yt:'I6BaK5QzZ8o'},
   {title:'Indonesia Pusaka',artist:'Genshin Lyre Cover',yt:'ERk78GubtzU'},
@@ -350,7 +351,6 @@ const songs=[
   {title:'Locked Away',artist:'R. City ft. Adam Levine',yt:'39JqhfTt4vg'},
   {title:'Let Her Go',artist:'Passenger',yt:'8rK6y7vyQlQ'},
   {title:'Cupid',artist:'FIFTY FIFTY',yt:'D-HwtZtc-aY'},
-  {title:'Happy Birthday',artist:'Cover',yt:'tUbDAjuD0v0'},
 ];
 
 const palettes=[
